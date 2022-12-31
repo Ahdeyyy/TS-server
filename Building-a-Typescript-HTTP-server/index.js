@@ -2,8 +2,8 @@
 exports.__esModule = true;
 var http_1 = require("http");
 var port = 5050;
-var server = (0, http_1.createServer)(function (request, response) {
-    response.write("Hello, World!", function (error) {
+var server = (0, http_1.createServer)(function(request, response) {
+    response.write("Hello, World!", function(error) {
         if (error) {
             console.error(error);
         }
