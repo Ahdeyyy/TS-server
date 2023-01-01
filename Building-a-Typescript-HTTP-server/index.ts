@@ -4,7 +4,7 @@ const port: number = 5050
 
 const server = createServer(
 	(request: IncomingMessage, response: ServerResponse) => {
-		response.write("Hello, World!", (error) => {
+		response.write(`Hello, World! at: ${request.url}`, (error) => {
 			if (error) {
 				console.error(error)
 			}
