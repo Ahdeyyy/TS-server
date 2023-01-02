@@ -2,42 +2,51 @@ import { Server, createServer, ServerResponse, IncomingMessage, } from 'http'
 
 const port: number = 5050
 
+type Handler = {
+	(request: IncomingMessage, response: ServerResponse): void;
+
+}
 interface route {
 	path: string;
-	handler: (request: IncomingMessage, response: ServerResponse) => void;
+	handler: Handler;
 }
+
 
 interface router {
-	routes: Map<string, route>
+	routes: Map<string, route>;
+	add_handler: (
+		path: string,
+		handler: Handler) => void;
+	match_route: (url: string) => Handler;
 }
 
+function CreateRouter(): router {
+	return {
+		routes: new Map(),
+		add_handler(path: string, handler: Handler) {
+			this.routes[path] = { path: path, handler: handler }
+		},
+		match_route(url: string) {
 
-
-const match_route = (url: string, routes: Map<string, route>) => {
-
-	if (routes[url]) {
-		return routes[url].handler
-	} else {
-		return (request: IncomingMessage, response: ServerResponse) => {
-			response.statusCode = 404
-			response.write(`${response.statusCode} ${url} page not found`)
-			response.end()
+			if (this.routes[url]) {
+				return this.routes[url].handler
+			} else {
+				return (request: IncomingMessage, response: ServerResponse) => {
+					response.statusCode = 404
+					response.write(`${response.statusCode} ${url} not found`)
+					response.end()
+				}
+			}
 		}
+
 	}
 }
 
-const add_handler =
-	(router: router, path: string, handler: (request: IncomingMessage, response: ServerResponse) => void) => {
-		router.routes[path] = { path: path, handler: handler }
-	}
 
-
-let Router: router = {
-	routes: new Map(),
-}
+let Router: router = CreateRouter()
 // home route and its handler
 
-add_handler(Router, '/', (request: IncomingMessage, response: ServerResponse) => {
+Router.add_handler('/', async (request: IncomingMessage, response: ServerResponse) => {
 	response.write(`Hello, World! from ${request.url}`), (error: Error) => {
 		if (error) {
 			console.error(error)
@@ -46,7 +55,7 @@ add_handler(Router, '/', (request: IncomingMessage, response: ServerResponse) =>
 	response.end()
 })
 
-add_handler(Router, '/foo', (request: IncomingMessage, response: ServerResponse) => {
+Router.add_handler('/foo', async (request: IncomingMessage, response: ServerResponse) => {
 	response.write(`bar`), (error: Error) => {
 		if (error) {
 			console.error(error)
@@ -56,9 +65,9 @@ add_handler(Router, '/foo', (request: IncomingMessage, response: ServerResponse)
 })
 
 
-const server: Server = createServer((request: IncomingMessage, response: ServerResponse) => {
+const server: Server = createServer(async (request: IncomingMessage, response: ServerResponse) => {
 	let url: string = request.url || ''
-	const handle = match_route(url, Router.routes)
+	const handle = Router.match_route(url)
 	handle(request, response)
 
 })
@@ -66,5 +75,5 @@ const server: Server = createServer((request: IncomingMessage, response: ServerR
 server.listen(port)
 
 if (server.listening) {
-	console.log(`server is listening on port:${port}.\thttp://localhost:${port}`)
+	console.log(`server is listening on port:${port}.\nhttp://localhost:${port}`)
 }
